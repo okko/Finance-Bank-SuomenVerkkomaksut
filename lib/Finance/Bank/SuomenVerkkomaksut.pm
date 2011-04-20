@@ -53,9 +53,12 @@ Finance::Bank::SuomenVerkkomaksut - Process payments through JSON API of Suomen 
     # Creating a new payment
     my $tx = Finance::Bank::SuomenVerkkomaksut->new({merchant_id => 'XXX', merchant_secret => 'YYY'});
     $tx->content(....);
-    my $url = $tx->submit();
-    print "Please go to $url to pay.";
-
+    my $submit_result = $tx->submit();
+    if ($submit_result) {
+        print "Please go to ". $tx->url() ." $url to pay.";
+    } else {
+        die 'Failed to generate payment';
+    }
 
     # Verifying the payment when the user returns or when the notify address receives a request
     my $tx = Finance::Bank::SuomenVerkkomaksut->new({merchant_id => 'XXX', merchant_secret => 'YYY'});
@@ -129,6 +132,8 @@ sub submit {
 ##                with either the processor provided error message, or some
 #                error message to indicate why it failed.
     # $self->error_message('Ei vaan pysty');
+
+    return 1;
 }
 
 =head2 verify_return
