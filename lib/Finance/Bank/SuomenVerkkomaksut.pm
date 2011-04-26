@@ -8,7 +8,7 @@ BEGIN {
 }
 use JSON::XS;
 use Net::SSLeay qw/post_https make_headers/;
-use Digest::MD5;
+use Digest::MD5 qw/md5_hex/;
 
 has port => (is => 'ro', default => '443');
 has server => (is => 'ro', default => 'payment.verkkomaksut.fi');
