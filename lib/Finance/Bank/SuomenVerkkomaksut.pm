@@ -110,7 +110,9 @@ sub submit {
     my $json_content = JSON::XS::encode_json($self->content());
 
     if ($self->debug()) {
-	warn 'SuomenVerkkomaksut.pm submitting JSON content '.$json_content;
+	warn 'SuomenVerkkomaksut submitting JSON content '.$json_content;
+	warn 'SuomenVerkkomaksut using user '.$user;
+	# $Net::SSLeay::trace = 3;
     }
 
     my ($page, $server_response, %headers)
@@ -119,10 +121,10 @@ sub submit {
 	    $self->server(), $self->port(), $self->path(), 
 	    make_headers(
 		'Authorization' => 'Basic ' . MIME::Base64::encode("$user:$pass",''),
-		'Content-Type' => 'application/json',
 		'X-Verkkomaksut-Api-Version' => $self->api_version(), 
 	    ),
-	    $json_content
+	    $json_content,
+	    'application/json',
 	)
     ;
 
@@ -182,6 +184,7 @@ sub submit {
 sub verify_return {
     my $self = shift;
     my $args = shift;
+    my $type = $args->{type} || 'success';
     my $order_number = $args->{ORDER_NUMBER};
     my $timestamp = $args->{TIMESTAMP};
     my $paid = $args->{PAID};
@@ -191,14 +194,26 @@ sub verify_return {
     # use test_merchant_secret if in test mode, otherwise use the real merchant_secret.
     my $secret = $self->test_transaction() ? $self->test_merchant_secret() : $self->merchant_secret();
 
-    my $our_return_authcode = md5_hex( join('|', $order_number, $timestamp, $paid, $method, $secret)  );
-    return $our_return_authcode eq $their_return_authcode;
+    my $our_return_authcode;
+    if ($type eq 'failure') {
+	warn 'SuomenVerkkomaksut: type eq failure.' if ($self->debug());
+	$our_return_authcode = md5_hex( join('|', $order_number, $timestamp, $secret) );
+    } else {
+	warn 'SuomenVerkkomaksut: type defaulting to success.' if ($self->debug());
+	# default: type eq 'success'
+	$our_return_authcode = md5_hex( join('|', $order_number, $timestamp, $paid, $method, $secret) );
+    }
+    my $result = $our_return_authcode eq $their_return_authcode;
+    warn 'SuomenVerkkomaksut: verify_return result '.$result if ($self->debug());
+    return $result;
 }
 
 =head1 SECURITY
 
     Don't allow user to set the test_transaction to true! If the user can set it to true when returning he
     will get his payment registered as processed.
+
+    Don't allow user to set the 'type' parameter of verify_return.
 
 =head1 SEE ALSO
 
