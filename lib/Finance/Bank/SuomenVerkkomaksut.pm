@@ -22,6 +22,12 @@ has 'api_version' => (is => 'rw', default => '1');
 has 'merchant_id' => (is => 'rw', default => '13466');
 has 'merchant_secret' => (is => 'rw', default => '6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ');
 
+# Set to 1 to mark the mode as a test.
+has 'test_transaction' => (is => 'rw', default => 0);
+
+# Set to 1 to get debug warns.
+has 'debug' => (is => 'rw', default => 0);
+
 # These are used when test_transaction() is set to true to signal a test payment is in effect.
 has 'test_merchant_id' => (is => 'ro', default => '13466');
 has 'test_merchant_secret' => (is => 'ro', default => '6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ');
@@ -30,6 +36,8 @@ has 'test_merchant_secret' => (is => 'ro', default => '6pKF4jkv97zmqBJ3ZL8gUw5Df
 has 'content' => (is => 'rw', default => sub { {}; });
 
 # Populated when you call submit():
+# Url where the user should go to, to make the payment
+has 'url' => (is => 'rw');
 # Server response from the API, just in case you need it
 has 'server_response' => (is => 'rw');
 # Status of the submission
@@ -52,7 +60,10 @@ Finance::Bank::SuomenVerkkomaksut - Process payments through JSON API of Suomen 
 
     # Creating a new payment
     my $tx = Finance::Bank::SuomenVerkkomaksut->new({merchant_id => 'XXX', merchant_secret => 'YYY'});
-    $tx->content(....);
+    $tx->content({....});
+    # set to 1 when you are developing, 0 in production
+    $tx->test_transaction(1);
+
     my $submit_result = $tx->submit();
     if ($submit_result) {
         print "Please go to ". $tx->url() ." $url to pay.";
@@ -89,8 +100,17 @@ sub submit {
 
     # Replace user and password with the test merchant settings if test mode implied
     if ($self->test_transaction()) {
+	warn 'SuomenVerkkomaksut in test_transaction mode.' if ($self->debug());
 	$user = $self->test_merchant_id();
 	$pass = $self->test_merchant_secret();
+    } else {
+	warn 'SuomenVerkkomaksut in production mode.' if ($self->debug());
+    }
+
+    my $json_content = JSON::XS::encode_json($self->content());
+
+    if ($self->debug()) {
+	warn 'SuomenVerkkomaksut.pm submitting JSON content '.$json_content;
     }
 
     my ($page, $server_response, %headers)
@@ -102,7 +122,7 @@ sub submit {
 		'Content-Type' => 'application/json',
 		'X-Verkkomaksut-Api-Version' => $self->api_version(), 
 	    ),
-	    JSON::XS::encode_json($self->content()),
+	    $json_content
 	)
     ;
 
@@ -115,24 +135,31 @@ sub submit {
     warn Dumper($server_response);
     warn Dumper(\%headers);
 
-#              * call is_success() with either a true or false value, indicating
-#                if the transaction was successful or not.
-    $self->is_success(1);
-#              * call result_code() with the servers result code (this is
-#                generally one field from the response indicating that it was
-#                successful or a failure, most processors provide many possible
-#                result codes to differentiate different types of success and
-##                failure).
-    $self->result_code(200);
-#              * If the transaction was successful, call authorization() with
-#                the authorization code the processor provided.
-    $self->url('http://pay.verkkomaksut.fi.now');
+    # * call is_success() with either a true or false value, indicating
+    #   if the transaction was successful or not.
+    $server_response =~ m/.*? (\d+) .*/;
+    my $server_response_status_code = $1;
+    if ($server_response_status_code eq '200') {
+	$self->is_success(1);
+    } else {
+	$self->is_success(0);
+	# * If the transaction was not successful, call error_message()
+	#   with either the processor provided error message, or some
+	#   error message to indicate why it failed.
+	$self->error_message($server_response.' '.$page);
+    }
 
-##              * If the transaction was not successful, call error_message()
-##                with either the processor provided error message, or some
-#                error message to indicate why it failed.
-    # $self->error_message('Ei vaan pysty');
+    # * call result_code() with the servers result code (this is
+    #   generally one field from the response indicating that it was
+    #   successful or a failure, most processors provide many possible
+    #   result codes to differentiate different types of success and
+    #   failure).
+    $self->result_code($server_response_status_code);
 
+    if ($self->is_success()) {
+	# my $json_content = JSON::XS::encode_json($self->content());
+	$self->url($page);
+    }
     return 1;
 }
 
@@ -170,8 +197,8 @@ sub verify_return {
 
 =head1 SECURITY
 
-    Don't allow user to set the test_transaction as the user could set it to true on return and get
-    the payment incorrectly registered as processed.
+    Don't allow user to set the test_transaction to true! If the user can set it to true when returning he
+    will get his payment registered as processed.
 
 =head1 SEE ALSO
 
