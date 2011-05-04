@@ -1,5 +1,8 @@
 Changelog for Finance::Bank::SuomenVerkkomaksut
 
+0.003     2011-05-04 17:10:00 Europe/Helsinki
+    * Removed PodWeaver from dist.ini, removing duplicated sections in documentation.
+
 0.002     2011-05-04 16:39:00 Europe/Helsinki
 
     * Improved documentation.
