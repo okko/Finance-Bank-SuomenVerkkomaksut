@@ -2,10 +2,6 @@ package Finance::Bank::SuomenVerkkomaksut;
 use Moose;
 use utf8;
 
-BEGIN {
-    $Finance::Bank::SuomenVerkkomaksut::AUTHORITY = 'cpan:okko';
-    $Finance::Bank::SuomenVerkkomaksut::VERSION   = '0.014';
-}
 use Data::Dumper;
 use JSON::XS;
 use Net::SSLeay qw/post_https make_headers/;
@@ -66,7 +62,46 @@ Finance::Bank::SuomenVerkkomaksut - Process payments through JSON API of Suomen 
 
     # Creating a new payment
     my $tx = Finance::Bank::SuomenVerkkomaksut->new({merchant_id => 'XXX', merchant_secret => 'YYY'});
-    $tx->content({....}); # All content in accordance to http://docs.verkkomaksut.fi/ field specs
+    # All content in accordance to http://docs.verkkomaksut.fi/ field specs
+    $tx->content({
+            orderNumber => 1,
+            referenceNumber => 13,
+            description => 'Order 1',
+            currency => 'EUR',
+            locale => 'fi_FI',
+            urlSet => {success => $c->uri_for('/payment/success').'/',
+                       failure => $c->uri_for('/payment/failure').'/',
+                       pending => $c->uri_for('/payment/pending').'/',
+                       notification => $c->uri_for('/payment/notification').'/',
+            },
+            orderDetails => {
+                includeVat => 1,
+                contact => {
+                    firstName => 'First',
+                    lastName => 'Last',
+                    email => 'first@example.com',
+                    telephone => '555123',
+                    address => {
+                        street => 'Street 123',
+                        postalCode => '00100',
+                        postalOffice => 'Helsinki',
+                        country => 'FI',
+                    }
+                },
+                products => [
+                    {
+                        "title" => 'Product title',
+                        "amount" => "1.00",
+                        "price" => 123,
+                        "vat" => "0.00",
+                        "discount" => "0.00",
+                        "type" => "1", # 1=normal product row
+                    },
+                    ],
+            },
+
+    });
+
     # set to 1 when you are developing, 0 in production
     $tx->test_transaction(1);
 
@@ -90,7 +125,7 @@ Finance::Bank::SuomenVerkkomaksut - Process payments through JSON API of Suomen 
         # depending on the return address, mark payment as paid (if returned to RETURN_ADDRESS),
         # as pending (if returned to PENDING_ADDRESS) or as canceled (if returned to CANCEL_ADDRESS).
         if ($url eq $return_url) {
-            &ship_products();
+            # &ship_products();
         }
     } else {
         print "Checksum mismatch, returning not processed. Please contact our customer service if you believe this to be an error.";
@@ -169,8 +204,6 @@ sub submit {
 
     if ( $self->is_success() ) {
         my $json_content = JSON::XS::decode_json( $self->server_response_json() );
-        use Data::Dumper;
-        warn Dumper($server_response);
         $self->url( $json_content->{url} );
         $self->token( $json_content->{token} );
         $self->order_number( $json_content->{orderNumber} );
