@@ -4,53 +4,55 @@ use utf8;
 
 BEGIN {
     $Finance::Bank::SuomenVerkkomaksut::AUTHORITY = 'cpan:okko';
-    $Finance::Bank::SuomenVerkkomaksut::VERSION = '0.014';
+    $Finance::Bank::SuomenVerkkomaksut::VERSION   = '0.014';
 }
 use Data::Dumper;
 use JSON::XS;
 use Net::SSLeay qw/post_https make_headers/;
 use Digest::MD5 qw/md5_hex/;
 
-has port => (is => 'ro', default => '443');
-has server => (is => 'ro', default => 'payment.verkkomaksut.fi');
-has path => (is => 'ro', default => '/api-payment/create');
+has port   => ( is => 'ro', default => '443' );
+has server => ( is => 'ro', default => 'payment.verkkomaksut.fi' );
+has path   => ( is => 'ro', default => '/api-payment/create' );
 
-has 'api_version' => (is => 'rw', default => '1');
+has 'api_version' => ( is => 'rw', default => '1' );
 
 # The defaults here are for the Suomen Verkkomaksut test merchant account,
 # it accepts no real payments but is suitable for testing. You should
 # override these with the id and secret of your contract.
-has 'merchant_id' => (is => 'rw', default => '13466');
-has 'merchant_secret' => (is => 'rw', default => '6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ');
+has 'merchant_id'     => ( is => 'rw', default => '13466' );
+has 'merchant_secret' => ( is => 'rw', default => '6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ' );
 
 # Set to 1 to mark the mode as a test.
-has 'test_transaction' => (is => 'rw', default => 0);
+has 'test_transaction' => ( is => 'rw', default => 0 );
 
 # Set to 1 to get debug warns.
-has 'debug' => (is => 'rw', default => 0);
+has 'debug' => ( is => 'rw', default => 0 );
 
 # These are used when test_transaction() is set to true to signal a test payment is in effect.
-has 'test_merchant_id' => (is => 'ro', default => '13466');
-has 'test_merchant_secret' => (is => 'ro', default => '6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ');
+has 'test_merchant_id'     => ( is => 'ro', default => '13466' );
+has 'test_merchant_secret' => ( is => 'ro', default => '6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ' );
 
 # Content being submitted to the Suomen Verkkomaksut API, as a Perl data Structure.
-has 'content' => (is => 'rw', default => sub { {}; });
+has 'content' => ( is => 'rw', default => sub { {}; } );
 
 # Populated when you call submit():
-has 'url' => (is => 'rw'); # Url where the user should go to, to make the payment
-has 'token' => (is => 'rw'); # The reply token
-has 'order_number' => (is => 'rw'); # the reply order number
+has 'url'          => ( is => 'rw' );    # Url where the user should go to, to make the payment
+has 'token'        => ( is => 'rw' );    # The reply token
+has 'order_number' => ( is => 'rw' );    # the reply order number
 
 # Server response from the API, just in case you need it
-has 'server_response_json' => (is => 'rw'); # the json string as it came from the server, unprocessed
-has 'server_response' => (is => 'rw'); # the response as a perl data structure, decoded from json
-# Status of the submission
-has 'is_success' => (is => 'rw');
-# Server result code of the submission
-has 'result_code' => (is => 'rw');
+has 'server_response_json' => ( is => 'rw' );    # the json string as it came from the server, unprocessed
+has 'server_response'      => ( is => 'rw' );    # the response as a perl data structure, decoded from json
 
-has 'error_code' => (is => 'rw');
-has 'error_message' => (is => 'rw');
+# Status of the submission
+has 'is_success' => ( is => 'rw' );
+
+# Server result code of the submission
+has 'result_code' => ( is => 'rw' );
+
+has 'error_code'    => ( is => 'rw' );
+has 'error_message' => ( is => 'rw' );
 
 # ABSTRACT: Process payments through JSON API of Suomen Verkkomaksut in Finland. Enables payments from all Finnish Banks online: Nordea, Osuuspankki, Sampo, Tapiola, Aktia, Nooa, Paikallisosuuspankit, Säästöpankit, Handelsbanken, S-Pankki, Ålandsbanken, also from Visa, Visa Electron, MasterCard credit cards through Luottokunta, and PayPal, billing through Collector and Klarna.
 
@@ -103,56 +105,59 @@ sub submit {
     my $pass = $self->merchant_secret();
 
     # Replace user and password with the test merchant settings if test mode implied
-    if ($self->test_transaction()) {
-	warn 'SuomenVerkkomaksut in test_transaction mode.' if ($self->debug());
-	$user = $self->test_merchant_id();
-	$pass = $self->test_merchant_secret();
-    } else {
-	warn 'SuomenVerkkomaksut in production mode.' if ($self->debug());
+    if ( $self->test_transaction() ) {
+        warn 'SuomenVerkkomaksut in test_transaction mode.' if ( $self->debug() );
+        $user = $self->test_merchant_id();
+        $pass = $self->test_merchant_secret();
+    }
+    else {
+        warn 'SuomenVerkkomaksut in production mode.' if ( $self->debug() );
     }
 
-    my $json_content = JSON::XS::encode_json($self->content());
+    my $json_content = JSON::XS::encode_json( $self->content() );
 
-    if ($self->debug()) {
-	warn 'SuomenVerkkomaksut submitting JSON content '.$json_content;
-	warn 'SuomenVerkkomaksut using user '.$user;
-	# $Net::SSLeay::trace = 3;
+    if ( $self->debug() ) {
+        warn 'SuomenVerkkomaksut submitting JSON content ' . $json_content;
+        warn 'SuomenVerkkomaksut using user ' . $user;
+
+        # $Net::SSLeay::trace = 3;
     }
 
-    my ($page, $server_response, %headers)
-	=
-	post_https(
-	    $self->server(), $self->port(), $self->path(), 
-	    make_headers(
-		'Authorization' => 'Basic ' . MIME::Base64::encode("$user:$pass",''),
-		'X-Verkkomaksut-Api-Version' => $self->api_version(), 
-	    ),
-	    $json_content,
-	    'application/json',
-	)
-    ;
+    my ( $page, $server_response, %headers ) = post_https(
+        $self->server(),
+        $self->port(),
+        $self->path(),
+        make_headers(
+            'Authorization'              => 'Basic ' . MIME::Base64::encode( "$user:$pass", '' ),
+            'X-Verkkomaksut-Api-Version' => $self->api_version(),
+        ),
+        $json_content,
+        'application/json',
+    );
 
     # call server_response() with a copy of the entire unprocessed
     # response, to be stored in case the user needs it in the future.
     $self->server_response_json($page);
-    $self->server_response(JSON::XS::decode_json($page));
+    $self->server_response( JSON::XS::decode_json($page) );
 
-    warn 'SuomenVerkkomaksut server response '. Dumper($server_response) if ($self->debug());
-    warn 'Suomenverkkomaksut server response headers '.Dumper(\%headers) if ($self->debug());
-    warn 'SuomenVerkkomaksut server response content '. Dumper($page) if ($self->debug());
+    warn 'SuomenVerkkomaksut server response ' . Dumper($server_response)    if ( $self->debug() );
+    warn 'Suomenverkkomaksut server response headers ' . Dumper( \%headers ) if ( $self->debug() );
+    warn 'SuomenVerkkomaksut server response content ' . Dumper($page)       if ( $self->debug() );
 
     # * call is_success() with either a true or false value, indicating
     #   if the transaction was successful or not.
     $server_response =~ m/.*? (\d+) .*/;
     my $server_response_status_code = $1;
-    if ($server_response_status_code eq '200' or $server_response_status_code eq '201') {
-	$self->is_success(1);
-    } else {
-	$self->is_success(0);
-	# * If the transaction was not successful, call error_message()
-	#   with either the processor provided error message, or some
-	#   error message to indicate why it failed.
-	$self->error_message($server_response.' '.$page);
+    if ( $server_response_status_code eq '200' or $server_response_status_code eq '201' ) {
+        $self->is_success(1);
+    }
+    else {
+        $self->is_success(0);
+
+        # * If the transaction was not successful, call error_message()
+        #   with either the processor provided error message, or some
+        #   error message to indicate why it failed.
+        $self->error_message( $server_response . ' ' . $page );
     }
 
     # * call result_code() with the servers result code (this is
@@ -162,13 +167,13 @@ sub submit {
     #   failure).
     $self->result_code($server_response_status_code);
 
-    if ($self->is_success()) {
-	my $json_content = JSON::XS::decode_json($self->server_response_json());
-	use Data::Dumper;
-	warn Dumper($server_response);
-	$self->url($json_content->{url});
-	$self->token($json_content->{token});
-	$self->order_number($json_content->{orderNumber});
+    if ( $self->is_success() ) {
+        my $json_content = JSON::XS::decode_json( $self->server_response_json() );
+        use Data::Dumper;
+        warn Dumper($server_response);
+        $self->url( $json_content->{url} );
+        $self->token( $json_content->{token} );
+        $self->order_number( $json_content->{orderNumber} );
     }
     return 1;
 }
@@ -190,34 +195,36 @@ sub submit {
 =cut
 
 sub verify_return {
-    my $self = shift;
-    my $args = shift;
-    my $type = $args->{type} || 'success';
-    my $order_number = $args->{ORDER_NUMBER};
-    my $timestamp = $args->{TIMESTAMP};
-    my $paid = $args->{PAID};
-    my $method = $args->{METHOD};
+    my $self                  = shift;
+    my $args                  = shift;
+    my $type                  = $args->{type} || 'success';
+    my $order_number          = $args->{ORDER_NUMBER};
+    my $timestamp             = $args->{TIMESTAMP};
+    my $paid                  = $args->{PAID};
+    my $method                = $args->{METHOD};
     my $their_return_authcode = $args->{RETURN_AUTHCODE};
 
     # use test_merchant_secret if in test mode, otherwise use the real merchant_secret.
     my $secret = $self->test_transaction() ? $self->test_merchant_secret() : $self->merchant_secret();
 
-    warn 'SuomenVerkkomaksut verify_return got '.Dumper($args) if ($self->debug());
+    warn 'SuomenVerkkomaksut verify_return got ' . Dumper($args) if ( $self->debug() );
 
     my $our_return_authcode;
-    if ($type eq 'failure') {
-	warn 'SuomenVerkkomaksut: type eq failure.' if ($self->debug());
-	$our_return_authcode = uc( md5_hex( join('|', $order_number, $timestamp, $secret) ) );
-    } else {
-	warn 'SuomenVerkkomaksut: type defaulting to success.' if ($self->debug());
-	# default: type eq 'success'
-	$our_return_authcode = uc( md5_hex( join('|', $order_number, $timestamp, $paid, $method, $secret) ) );
+    if ( $type eq 'failure' ) {
+        warn 'SuomenVerkkomaksut: type eq failure.' if ( $self->debug() );
+        $our_return_authcode = uc( md5_hex( join( '|', $order_number, $timestamp, $secret ) ) );
     }
-    warn 'SuomenVerkkomaksut: our return authcode: '.$our_return_authcode if ($self->debug());
-    warn 'SuomenVerkkomaksut: their return authcode: '.$their_return_authcode if ($self->debug());
+    else {
+        warn 'SuomenVerkkomaksut: type defaulting to success.' if ( $self->debug() );
 
-    my $result = ($our_return_authcode eq $their_return_authcode) ? 1 : 0;
-    warn 'SuomenVerkkomaksut: verify_return result '.$result if ($self->debug());
+        # default: type eq 'success'
+        $our_return_authcode = uc( md5_hex( join( '|', $order_number, $timestamp, $paid, $method, $secret ) ) );
+    }
+    warn 'SuomenVerkkomaksut: our return authcode: ' . $our_return_authcode     if ( $self->debug() );
+    warn 'SuomenVerkkomaksut: their return authcode: ' . $their_return_authcode if ( $self->debug() );
+
+    my $result = ( $our_return_authcode eq $their_return_authcode ) ? 1 : 0;
+    warn 'SuomenVerkkomaksut: verify_return result ' . $result if ( $self->debug() );
     return $result;
 }
 
