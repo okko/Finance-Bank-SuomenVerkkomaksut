@@ -26,5 +26,4 @@ perllocal.pod
 
 # Dist files
 ./*.tar.gz
-
-
+/Finance-Bank-SuomenVerkkomaksut-*
