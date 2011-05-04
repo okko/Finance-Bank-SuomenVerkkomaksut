@@ -24,3 +24,7 @@ perllocal.pod
 *.swp
 *~
 
+# Dist files
+./*.tar.gz
+
+

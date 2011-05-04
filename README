@@ -57,6 +57,14 @@ SYNOPSIS
         Also the NOTIFY_ADDRESS should call verify_return first to verify the checksum and only then proceed with
         the information received in the NOTIFY_ADDRESS.
 
+NAME
+    Finance::Bank::SuomenVerkkomaksut - Process payments through JSON API of
+    Suomen Verkkomaksut in Finland. Enables payments from all Finnish Banks
+    online: Nordea, Osuuspankki, Sampo, Tapiola, Aktia, Nooa,
+    Paikallisosuuspankit, Säästöpankit, Handelsbanken, S-Pankki,
+    Ålandsbanken, also from Visa, Visa Electron, MasterCard credit cards
+    through Luottokunta, and PayPal, billing through Collector and Klarna.
+
 SECURITY
         Don't allow user to set the test_transaction to true! If the user can set it to true when returning he
         will get his payment registered as processed.
@@ -66,6 +74,16 @@ SECURITY
 SEE ALSO
     http://verkkomaksut.fi/ http://docs.verkkomaksut.fi/
     http://www.verkkomaksut.fi/palvelut/palveluiden-kayttoonotto
+
+AUTHOR
+    Oskari Okko Ojala <okko@cpan.org>, Frantic Oy http://www.frantic.com/
+
+COPYRIGHT AND LICENSE
+    Copyright (C) Oskari Ojala 2011.
+
+    This library is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself, either Perl version 5.8.8 or, at
+    your option, any later version of Perl you may have available.
 
 AUTHOR
     Oskari Ojala <okko@cpan.org>
