@@ -6,6 +6,7 @@ BEGIN {
     $Finance::Bank::SuomenVerkkomaksut::AUTHORITY = 'cpan:okko';
     $Finance::Bank::SuomenVerkkomaksut::VERSION = '0.014';
 }
+use Data::Dumper;
 use JSON::XS;
 use Net::SSLeay qw/post_https make_headers/;
 use Digest::MD5 qw/md5_hex/;
@@ -36,10 +37,13 @@ has 'test_merchant_secret' => (is => 'ro', default => '6pKF4jkv97zmqBJ3ZL8gUw5Df
 has 'content' => (is => 'rw', default => sub { {}; });
 
 # Populated when you call submit():
-# Url where the user should go to, to make the payment
-has 'url' => (is => 'rw');
+has 'url' => (is => 'rw'); # Url where the user should go to, to make the payment
+has 'token' => (is => 'rw'); # The reply token
+has 'order_number' => (is => 'rw'); # the reply order number
+
 # Server response from the API, just in case you need it
-has 'server_response' => (is => 'rw');
+has 'server_response_json' => (is => 'rw'); # the json string as it came from the server, unprocessed
+has 'server_response' => (is => 'rw'); # the response as a perl data structure, decoded from json
 # Status of the submission
 has 'is_success' => (is => 'rw');
 # Server result code of the submission
@@ -60,13 +64,13 @@ Finance::Bank::SuomenVerkkomaksut - Process payments through JSON API of Suomen 
 
     # Creating a new payment
     my $tx = Finance::Bank::SuomenVerkkomaksut->new({merchant_id => 'XXX', merchant_secret => 'YYY'});
-    $tx->content({....});
+    $tx->content({....}); # All content in accordance to http://docs.verkkomaksut.fi/ field specs
     # set to 1 when you are developing, 0 in production
     $tx->test_transaction(1);
 
     my $submit_result = $tx->submit();
     if ($submit_result) {
-        print "Please go to ". $tx->url() ." $url to pay.";
+        print "Please go to ". $tx->url() ." $url to pay your order number ". $tx->order_number().', see you soon.';
     } else {
         die 'Failed to generate payment';
     }
@@ -130,18 +134,18 @@ sub submit {
 
     # call server_response() with a copy of the entire unprocessed
     # response, to be stored in case the user needs it in the future.
-    $self->server_response($page);
+    $self->server_response_json($page);
+    $self->server_response(JSON::XS::decode_json($page));
 
-    use Data::Dumper;
-    warn Dumper($page);
-    warn Dumper($server_response);
-    warn Dumper(\%headers);
+    warn 'SuomenVerkkomaksut server response '. Dumper($server_response) if ($self->debug());
+    warn 'Suomenverkkomaksut server response headers '.Dumper(\%headers) if ($self->debug());
+    warn 'SuomenVerkkomaksut server response content '. Dumper($page) if ($self->debug());
 
     # * call is_success() with either a true or false value, indicating
     #   if the transaction was successful or not.
     $server_response =~ m/.*? (\d+) .*/;
     my $server_response_status_code = $1;
-    if ($server_response_status_code eq '200') {
+    if ($server_response_status_code eq '200' or $server_response_status_code eq '201') {
 	$self->is_success(1);
     } else {
 	$self->is_success(0);
@@ -159,8 +163,12 @@ sub submit {
     $self->result_code($server_response_status_code);
 
     if ($self->is_success()) {
-	# my $json_content = JSON::XS::encode_json($self->content());
-	$self->url($page);
+	my $json_content = JSON::XS::decode_json($self->server_response_json());
+	use Data::Dumper;
+	warn Dumper($server_response);
+	$self->url($json_content->{url});
+	$self->token($json_content->{token});
+	$self->order_number($json_content->{orderNumber});
     }
     return 1;
 }
@@ -194,16 +202,21 @@ sub verify_return {
     # use test_merchant_secret if in test mode, otherwise use the real merchant_secret.
     my $secret = $self->test_transaction() ? $self->test_merchant_secret() : $self->merchant_secret();
 
+    warn 'SuomenVerkkomaksut verify_return got '.Dumper($args) if ($self->debug());
+
     my $our_return_authcode;
     if ($type eq 'failure') {
 	warn 'SuomenVerkkomaksut: type eq failure.' if ($self->debug());
-	$our_return_authcode = md5_hex( join('|', $order_number, $timestamp, $secret) );
+	$our_return_authcode = uc( md5_hex( join('|', $order_number, $timestamp, $secret) ) );
     } else {
 	warn 'SuomenVerkkomaksut: type defaulting to success.' if ($self->debug());
 	# default: type eq 'success'
-	$our_return_authcode = md5_hex( join('|', $order_number, $timestamp, $paid, $method, $secret) );
+	$our_return_authcode = uc( md5_hex( join('|', $order_number, $timestamp, $paid, $method, $secret) ) );
     }
-    my $result = $our_return_authcode eq $their_return_authcode;
+    warn 'SuomenVerkkomaksut: our return authcode: '.$our_return_authcode if ($self->debug());
+    warn 'SuomenVerkkomaksut: their return authcode: '.$their_return_authcode if ($self->debug());
+
+    my $result = ($our_return_authcode eq $their_return_authcode) ? 1 : 0;
     warn 'SuomenVerkkomaksut: verify_return result '.$result if ($self->debug());
     return $result;
 }
