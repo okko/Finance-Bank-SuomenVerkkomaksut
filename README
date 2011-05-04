@@ -123,3 +123,13 @@ COPYRIGHT AND LICENSE
     This library is free software; you can redistribute it and/or modify it
     under the same terms as Perl itself, either Perl version 5.8.8 or, at
     your option, any later version of Perl you may have available.
+
+AUTHOR
+    Oskari Okko Ojala <okko@cpan.org>, Frantic Oy http://www.frantic.com/
+
+COPYRIGHT AND LICENSE
+    This software is copyright (c) 2011 by Oskari Ojala.
+
+    This is free software; you can redistribute it and/or modify it under
+    the same terms as the Perl 5 programming language system itself.
+
