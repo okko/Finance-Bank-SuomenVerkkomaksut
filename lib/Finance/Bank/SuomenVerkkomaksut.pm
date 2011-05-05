@@ -7,54 +7,17 @@ use JSON::XS;
 use Net::SSLeay qw/post_https make_headers/;
 use Digest::MD5 qw/md5_hex/;
 
-has port   => ( is => 'ro', default => '443' );
-has server => ( is => 'ro', default => 'payment.verkkomaksut.fi' );
-has path   => ( is => 'ro', default => '/api-payment/create' );
-
-has 'api_version' => ( is => 'rw', default => '1' );
-
-# The defaults here are for the Suomen Verkkomaksut test merchant account,
-# it accepts no real payments but is suitable for testing. You should
-# override these with the id and secret of your contract.
-has 'merchant_id'     => ( is => 'rw', default => '13466' );
-has 'merchant_secret' => ( is => 'rw', default => '6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ' );
-
-# Set to 1 to mark the mode as a test.
-has 'test_transaction' => ( is => 'rw', default => 0 );
-
-# Set to 1 to get debug warns.
-has 'debug' => ( is => 'rw', default => 0 );
-
 # These are used when test_transaction() is set to true to signal a test payment is in effect.
 has 'test_merchant_id'     => ( is => 'ro', default => '13466' );
 has 'test_merchant_secret' => ( is => 'ro', default => '6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ' );
 
-# Content being submitted to the Suomen Verkkomaksut API, as a Perl data Structure.
-has 'content' => ( is => 'rw', default => sub { {}; } );
+=encoding utf-8
 
-# Populated when you call submit():
-has 'url'          => ( is => 'rw' );    # Url where the user should go to, to make the payment
-has 'token'        => ( is => 'rw' );    # The reply token
-has 'order_number' => ( is => 'rw' );    # the reply order number
-
-# Server response from the API, just in case you need it
-has 'server_response_json' => ( is => 'rw' );    # the json string as it came from the server, unprocessed
-has 'server_response'      => ( is => 'rw' );    # the response as a perl data structure, decoded from json
-
-# Status of the submission
-has 'is_success' => ( is => 'rw' );
-
-# Server result code of the submission
-has 'result_code' => ( is => 'rw' );
-
-has 'error_code'    => ( is => 'rw' );
-has 'error_message' => ( is => 'rw' );
-
-# ABSTRACT: Process payments through JSON API of Suomen Verkkomaksut in Finland. Enables payments from all Finnish Banks online: Nordea, Osuuspankki, Sampo, Tapiola, Aktia, Nooa, Paikallisosuuspankit, Säästöpankit, Handelsbanken, S-Pankki, Ålandsbanken, also from Visa, Visa Electron, MasterCard credit cards through Luottokunta, and PayPal, billing through Collector and Klarna.
+# ABSTRACT: Process payments through JSON API of Suomen Verkkomaksut in Finland. Payments from all Finnish Banks online: Nordea, Osuuspankki, Sampo, Tapiola, Aktia, Nooa, Paikallisosuuspankit, Säästöpankit, Handelsbanken, S-Pankki, Ålandsbanken, also from Visa, Visa Electron, MasterCard credit cards through Luottokunta, and PayPal, billing through Collector and Klarna.
 
 =head1 NAME
 
-Finance::Bank::SuomenVerkkomaksut - Process payments through JSON API of Suomen Verkkomaksut in Finland. Enables payments from all Finnish Banks online: Nordea, Osuuspankki, Sampo, Tapiola, Aktia, Nooa, Paikallisosuuspankit, Säästöpankit, Handelsbanken, S-Pankki, Ålandsbanken, also from Visa, Visa Electron, MasterCard credit cards through Luottokunta, and PayPal, billing through Collector and Klarna.
+Finance::Bank::SuomenVerkkomaksut - Process payments through JSON API of Suomen Verkkomaksut in Finland. Payments from all Finnish Banks online: Nordea, Osuuspankki, Sampo, Tapiola, Aktia, Nooa, Paikallisosuuspankit, Säästöpankit, Handelsbanken, S-Pankki, Ålandsbanken, also from Visa, Visa Electron, MasterCard credit cards through Luottokunta, and PayPal, billing through Collector and Klarna.
 
 =head1 SYNOPSIS
 
@@ -133,6 +96,52 @@ Finance::Bank::SuomenVerkkomaksut - Process payments through JSON API of Suomen 
 
 =cut
 
+=head2 merchant_id
+
+The merchant id given to you by Suomen Verkkomaksut when you make the contract. Defaults to the test merchant account.
+
+=cut
+
+has 'merchant_id'     => ( is => 'rw', default => '13466' );
+
+=head2 merchant_secret
+
+The merchant secret given to you by Suomen Verkkomaksut. Defaults to the test merchant account.
+
+=cut
+
+has 'merchant_secret' => ( is => 'rw', default => '6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ' );
+
+=head2 test_transaction
+
+Set to 1 to mark the mode as a test. In that case the test merchant account of Suomen Verkkomaksut is used and no real money is transferred. Intended for testing.
+
+=cut
+
+has 'test_transaction' => ( is => 'rw', default => 0 );
+
+=head2 debug
+
+Set to 1 to get debug warnings. Defaults to 0, no debug.
+
+=cut
+
+has 'debug' => ( is => 'rw', default => 0 );
+
+=head2 content
+
+Set the content to be sent to Suomen Verkkomaksut API. All content must be in accordance to http://docs.verkkomaksut.fi/ field specs, as a Perl data structure.
+
+=cut
+
+has 'content' => ( is => 'rw', default => sub { {}; } );
+
+=head2 submit
+
+Submits the content to Suomen Verkkomaksut API. Populates is_success, url, server_response_json, server_response, result_code, error_message, token and order_number.
+
+=cut
+
 sub submit {
     my $self = shift;
 
@@ -173,7 +182,6 @@ sub submit {
     # call server_response() with a copy of the entire unprocessed
     # response, to be stored in case the user needs it in the future.
     $self->server_response_json($page);
-    $self->server_response( JSON::XS::decode_json($page) );
 
     warn 'SuomenVerkkomaksut server response ' . Dumper($server_response)    if ( $self->debug() );
     warn 'Suomenverkkomaksut server response headers ' . Dumper( \%headers ) if ( $self->debug() );
@@ -204,6 +212,8 @@ sub submit {
 
     if ( $self->is_success() ) {
         my $json_content = JSON::XS::decode_json( $self->server_response_json() );
+        # TODO: What if json is invalid
+        $self->server_response( JSON::XS::decode_json($page) );
         $self->url( $json_content->{url} );
         $self->token( $json_content->{token} );
         $self->order_number( $json_content->{orderNumber} );
@@ -211,19 +221,82 @@ sub submit {
     return 1;
 }
 
+=head2 is_success
+
+Populated when you call submit. Status of the submission.
+
+=cut
+
+has 'is_success' => ( is => 'rw' );
+
+=head2 url
+
+Populated when you call submit. This is the URL the user should go to to make the payment.
+
+=cut
+
+has 'url'          => ( is => 'rw' );
+
+=head2 token
+
+(Nice-to-have) Populated when you call submit and the submission is succesful.
+
+=cut
+
+has 'token'        => ( is => 'rw' );
+
+=head2 order_number
+
+(Nice-to-have) Populated when you call submit and the submission is succesful.
+
+=cut
+
+has 'order_number' => ( is => 'rw' );    # the reply order number
+
+=head2 server_response_json
+
+(Nice-to-have) Populated when you call submit and the submission is succesful.
+
+=cut
+
+has 'server_response_json' => ( is => 'rw' );    # the json string as it came from the server, unprocessed
+
+=head2 server_response
+
+(Nice-to-have) Populated when you call submit. The entire unprocessed response content.
+
+=cut
+
+has 'server_response'      => ( is => 'rw' );    # the response as a perl data structure, decoded from json
+
+=head2 result_code
+
+(Nice-to-have) Populated when you call submit. The HTTP status code of the reply.
+
+=cut
+has 'result_code' => ( is => 'rw' );
+
+=head2 error_message
+
+Populated when you call submit and the submission is not succesful. Contains the error message from Suomen Verkkomaksut.
+
+=cut
+
+has 'error_message' => ( is => 'rw' );
+
 =head2 verify_return
 
-    When the end-user has completed the payment he will return to your specified RETURN_ADDRESS,
-    CANCEL_ADDRESS or PENDING_ADDRESS. Before you process the returning any further you must
-    check that the parameters given to this address have the correct checksum.
+When the end-user has completed the payment he will return to your specified RETURN_ADDRESS,
+CANCEL_ADDRESS or PENDING_ADDRESS. Before you process the returning any further you must
+check that the parameters given to this address have the correct checksum.
 
-    This sub verifies the checksum and returns true or false stating if the checksum matched or did not.
+This sub verifies the checksum and returns true or false stating if the checksum matched or did not.
 
-    After you know that the checksum matched you can mark the payment as paid (if returned to RETURN_ADDRESS),
-    as pending (if returned to PENDING_ADDRESS) or canceled (if returned to CANCEL_ADDRESS).
+After you know that the checksum matched you can mark the payment as paid (if returned to RETURN_ADDRESS),
+as pending (if returned to PENDING_ADDRESS) or canceled (if returned to CANCEL_ADDRESS).
 
-    Also the NOTIFY_ADDRESS should call verify_return first to verify the checksum and only then proceed with
-    the information received in the NOTIFY_ADDRESS.
+Also the NOTIFY_ADDRESS should call verify_return first to verify the checksum and only then proceed with
+the information received in the NOTIFY_ADDRESS.
 
 =cut
 
@@ -261,12 +334,45 @@ sub verify_return {
     return $result;
 }
 
+
+=head2 port
+
+The port where the submission is sent to. Defaults to 443.
+
+=cut
+
+has port   => ( is => 'rw', default => '443' );
+
+=head2 server
+
+The server host name where the submission is sent to. Defaults to payment.verkkomaksut.fi.
+
+=cut
+
+has server => ( is => 'rw', default => 'payment.verkkomaksut.fi' );
+
+=head2 path
+
+The URL path where the submission is sent to. Defaults to /api-payment/create.
+
+=cut
+
+has path   => ( is => 'rw', default => '/api-payment/create' );
+
+=head2 api_version
+
+The API version of Suomen Verkkomaksut. Defaults to 1.
+
+=cut
+
+has 'api_version' => ( is => 'rw', default => '1' );
+
 =head1 SECURITY
 
-    Don't allow user to set the test_transaction to true! If the user can set it to true when returning he
-    will get his payment registered as processed.
+Don't allow user to set the test_transaction to true! If the user can set it to true when returning he
+will get his payment registered as processed.
 
-    Don't allow user to set the 'type' parameter of verify_return.
+Don't allow user to set the 'type' parameter of verify_return.
 
 =head1 SEE ALSO
 
