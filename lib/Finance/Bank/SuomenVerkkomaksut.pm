@@ -12,6 +12,7 @@ has 'test_merchant_id'     => ( is => 'ro', default => '13466' );
 has 'test_merchant_secret' => ( is => 'ro', default => '6pKF4jkv97zmqBJ3ZL8gUw5DfT2NMQ' );
 
 =encoding utf-8
+=cut
 
 # ABSTRACT: Process payments through JSON API of Suomen Verkkomaksut in Finland. Payments from all Finnish Banks online: Nordea, Osuuspankki, Sampo, Tapiola, Aktia, Nooa, Paikallisosuuspankit, Säästöpankit, Handelsbanken, S-Pankki, Ålandsbanken, also from Visa, Visa Electron, MasterCard credit cards through Luottokunta, and PayPal, billing through Collector and Klarna.
 

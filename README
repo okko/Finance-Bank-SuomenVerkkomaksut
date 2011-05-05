@@ -1,10 +1,10 @@
 NAME
     Finance::Bank::SuomenVerkkomaksut - Process payments through JSON API of
-    Suomen Verkkomaksut in Finland. Enables payments from all Finnish Banks
-    online: Nordea, Osuuspankki, Sampo, Tapiola, Aktia, Nooa,
-    Paikallisosuuspankit, Säästöpankit, Handelsbanken, S-Pankki,
-    Ålandsbanken, also from Visa, Visa Electron, MasterCard credit cards
-    through Luottokunta, and PayPal, billing through Collector and Klarna.
+    Suomen Verkkomaksut in Finland. Payments from all Finnish Banks online:
+    Nordea, Osuuspankki, Sampo, Tapiola, Aktia, Nooa, Paikallisosuuspankit,
+    Säästöpankit, Handelsbanken, S-Pankki, Ålandsbanken, also from Visa,
+    Visa Electron, MasterCard credit cards through Luottokunta, and PayPal,
+    billing through Collector and Klarna.
 
 SYNOPSIS
         use Finance::Bank::SuomenVerkkomaksut;
@@ -80,24 +80,100 @@ SYNOPSIS
             print "Checksum mismatch, returning not processed. Please contact our customer service if you believe this to be an error.";
         }
 
+  merchant_id
+    The merchant id given to you by Suomen Verkkomaksut when you make the
+    contract. Defaults to the test merchant account.
+
+  merchant_secret
+    The merchant secret given to you by Suomen Verkkomaksut. Defaults to the
+    test merchant account.
+
+  test_transaction
+    Set to 1 to mark the mode as a test. In that case the test merchant
+    account of Suomen Verkkomaksut is used and no real money is transferred.
+    Intended for testing.
+
+  debug
+    Set to 1 to get debug warnings. Defaults to 0, no debug.
+
+  content
+    Set the content to be sent to Suomen Verkkomaksut API. All content must
+    be in accordance to http://docs.verkkomaksut.fi/ field specs, as a Perl
+    data structure.
+
+  submit
+    Submits the content to Suomen Verkkomaksut API. Populates is_success,
+    url, server_response_json, server_response, result_code, error_message,
+    token and order_number.
+
+  is_success
+    Populated when you call submit. Status of the submission.
+
+  url
+    Populated when you call submit. This is the URL the user should go to to
+    make the payment.
+
+  token
+    (Nice-to-have) Populated when you call submit and the submission is
+    succesful.
+
+  order_number
+    (Nice-to-have) Populated when you call submit and the submission is
+    succesful.
+
+  server_response_json
+    (Nice-to-have) Populated when you call submit and the submission is
+    succesful.
+
+  server_response
+    (Nice-to-have) Populated when you call submit. The entire unprocessed
+    response content.
+
+  result_code
+    (Nice-to-have) Populated when you call submit. The HTTP status code of
+    the reply.
+
+  error_message
+    Populated when you call submit and the submission is not succesful.
+    Contains the error message from Suomen Verkkomaksut.
+
   verify_return
-        When the end-user has completed the payment he will return to your specified RETURN_ADDRESS,
-        CANCEL_ADDRESS or PENDING_ADDRESS. Before you process the returning any further you must
-        check that the parameters given to this address have the correct checksum.
+    When the end-user has completed the payment he will return to your
+    specified RETURN_ADDRESS, CANCEL_ADDRESS or PENDING_ADDRESS. Before you
+    process the returning any further you must check that the parameters
+    given to this address have the correct checksum.
 
-        This sub verifies the checksum and returns true or false stating if the checksum matched or did not.
+    This method verifies the checksum and returns true or false stating if
+    the checksum matched or did not.
 
-        After you know that the checksum matched you can mark the payment as paid (if returned to RETURN_ADDRESS),
-        as pending (if returned to PENDING_ADDRESS) or canceled (if returned to CANCEL_ADDRESS).
+    After you know that the checksum matched you can mark the payment as
+    paid (if returned to RETURN_ADDRESS), as pending (if returned to
+    PENDING_ADDRESS) or canceled (if returned to CANCEL_ADDRESS).
 
-        Also the NOTIFY_ADDRESS should call verify_return first to verify the checksum and only then proceed with
-        the information received in the NOTIFY_ADDRESS.
+    Also your NOTIFY_ADDRESS should call verify_return first to verify the
+    checksum and only if the verification is passed proceed with the
+    information received.
+
+  port
+    The port where the submission is sent to. Defaults to 443.
+
+  server
+    The server host name where the submission is sent to. Defaults to
+    payment.verkkomaksut.fi.
+
+  path
+    The URL path where the submission is sent to. Defaults to
+    /api-payment/create.
+
+  api_version
+    The API version of Suomen Verkkomaksut. Defaults to 1.
 
 SECURITY
-        Don't allow user to set the test_transaction to true! If the user can set it to true when returning he
-        will get his payment registered as processed.
+    Don't allow user to set the test_transaction to true! If the user can
+    set it to true when returning he will get his payment registered as
+    processed.
 
-        Don't allow user to set the 'type' parameter of verify_return.
+    Don't allow user to set the 'type' parameter of verify_return.
 
 SEE ALSO
     http://verkkomaksut.fi/ http://docs.verkkomaksut.fi/
