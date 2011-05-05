@@ -290,13 +290,13 @@ When the end-user has completed the payment he will return to your specified RET
 CANCEL_ADDRESS or PENDING_ADDRESS. Before you process the returning any further you must
 check that the parameters given to this address have the correct checksum.
 
-This sub verifies the checksum and returns true or false stating if the checksum matched or did not.
+This method verifies the checksum and returns true or false stating if the checksum matched or did not.
 
 After you know that the checksum matched you can mark the payment as paid (if returned to RETURN_ADDRESS),
 as pending (if returned to PENDING_ADDRESS) or canceled (if returned to CANCEL_ADDRESS).
 
-Also the NOTIFY_ADDRESS should call verify_return first to verify the checksum and only then proceed with
-the information received in the NOTIFY_ADDRESS.
+Also your NOTIFY_ADDRESS should call verify_return first to verify the checksum and only if the verification
+is passed proceed with the information received.
 
 =cut
 
