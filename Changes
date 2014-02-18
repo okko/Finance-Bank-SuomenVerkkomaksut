@@ -1,5 +1,9 @@
 Changelog for Finance::Bank::SuomenVerkkomaksut
 
+0.007     2013-02-18 16:00:00 Europe/Helsinki
+
+    * Verkkomaksut urls to paytrail urls. Clarification to REST api_version method.
+
 0.006     2013-02-18 15:30:00 Europe/Helsinki
 
     * Change name in documentation and in debug messages from Suomen Verkkomaksut to Paytrail.
