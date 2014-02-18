@@ -6,6 +6,7 @@ use Data::Dumper;
 use JSON::XS;
 use Net::SSLeay qw/post_https make_headers/;
 use Digest::MD5 qw/md5_hex/;
+use MIME::Base64;
 
 # These are used when test_transaction() is set to true to signal a test payment is in effect.
 has 'test_merchant_id'     => ( is => 'ro', default => '13466' );
