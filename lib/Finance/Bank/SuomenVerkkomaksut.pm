@@ -15,11 +15,11 @@ has 'test_merchant_secret' => ( is => 'ro', default => '6pKF4jkv97zmqBJ3ZL8gUw5D
 =encoding utf-8
 =cut
 
-# ABSTRACT: Process payments through JSON API of Suomen Verkkomaksut in Finland. Payments from all Finnish Banks online: Nordea, Osuuspankki, Sampo, Tapiola, Aktia, Nooa, Paikallisosuuspankit, Säästöpankit, Handelsbanken, S-Pankki, Ålandsbanken, also from Visa, Visa Electron, MasterCard credit cards through Luottokunta, and PayPal, billing through Collector and Klarna.
+# ABSTRACT: Process payments through JSON API of Paytrail (Suomen Verkkomaksut) in Finland. Payments from all Finnish Banks online: Nordea, Osuuspankki, Sampo, Tapiola, Aktia, Nooa, Paikallisosuuspankit, Säästöpankit, Handelsbanken, S-Pankki, Ålandsbanken, also from Visa, Visa Electron, MasterCard credit cards through Luottokunta, and PayPal, billing through Collector and Klarna.
 
 =head1 NAME
 
-Finance::Bank::SuomenVerkkomaksut - Process payments through JSON API of Suomen Verkkomaksut in Finland. Payments from all Finnish Banks online: Nordea, Osuuspankki, Sampo, Tapiola, Aktia, Nooa, Paikallisosuuspankit, Säästöpankit, Handelsbanken, S-Pankki, Ålandsbanken, also from Visa, Visa Electron, MasterCard credit cards through Luottokunta, and PayPal, billing through Collector and Klarna.
+Finance::Bank::SuomenVerkkomaksut - Process payments through JSON API of Paytrail (Suomen Verkkomaksut) in Finland. Payments from all Finnish Banks online: Nordea, Osuuspankki, Sampo, Tapiola, Aktia, Nooa, Paikallisosuuspankit, Säästöpankit, Handelsbanken, S-Pankki, Ålandsbanken, also from Visa, Visa Electron, MasterCard credit cards through Luottokunta, and PayPal, billing through Collector and Klarna.
 
 =head1 SYNOPSIS
 
@@ -100,7 +100,7 @@ Finance::Bank::SuomenVerkkomaksut - Process payments through JSON API of Suomen 
 
 =head2 merchant_id
 
-The merchant id given to you by Suomen Verkkomaksut when you make the contract. Defaults to the test merchant account.
+The merchant id given to you by Paytrail when you make the contract. Defaults to the test merchant account.
 
 =cut
 
@@ -108,7 +108,7 @@ has 'merchant_id'     => ( is => 'rw', default => '13466' );
 
 =head2 merchant_secret
 
-The merchant secret given to you by Suomen Verkkomaksut. Defaults to the test merchant account.
+The merchant secret given to you by Paytrail. Defaults to the test merchant account.
 
 =cut
 
@@ -116,7 +116,7 @@ has 'merchant_secret' => ( is => 'rw', default => '6pKF4jkv97zmqBJ3ZL8gUw5DfT2NM
 
 =head2 test_transaction
 
-Set to 1 to mark the mode as a test. In that case the test merchant account of Suomen Verkkomaksut is used and no real money is transferred. Intended for testing.
+Set to 1 to mark the mode as a test. In that case the test merchant account of Paytrail is used and no real money is transferred. Intended for testing.
 
 =cut
 
@@ -132,7 +132,7 @@ has 'debug' => ( is => 'rw', default => 0 );
 
 =head2 content
 
-Set the content to be sent to Suomen Verkkomaksut API. All content must be in accordance to http://docs.verkkomaksut.fi/ field specs, as a Perl data structure.
+Set the content to be sent to Paytrail API. All content must be in accordance to http://docs.verkkomaksut.fi/ field specs, as a Perl data structure.
 
 =cut
 
@@ -140,7 +140,7 @@ has 'content' => ( is => 'rw', default => sub { {}; } );
 
 =head2 submit
 
-Submits the content to Suomen Verkkomaksut API. Populates is_success, url, server_response_json, server_response, result_code, error_message, token and order_number.
+Submits the content to Paytrail API. Populates is_success, url, server_response_json, server_response, result_code, error_message, token and order_number.
 
 =cut
 
@@ -152,19 +152,19 @@ sub submit {
 
     # Replace user and password with the test merchant settings if test mode implied
     if ( $self->test_transaction() ) {
-        warn 'SuomenVerkkomaksut in test_transaction mode.' if ( $self->debug() );
+        warn 'Paytrail in test_transaction mode.' if ( $self->debug() );
         $user = $self->test_merchant_id();
         $pass = $self->test_merchant_secret();
     }
     else {
-        warn 'SuomenVerkkomaksut in production mode.' if ( $self->debug() );
+        warn 'Paytrail in production mode.' if ( $self->debug() );
     }
 
     my $json_content = JSON::XS::encode_json( $self->content() );
 
     if ( $self->debug() ) {
-        warn 'SuomenVerkkomaksut submitting JSON content ' . $json_content;
-        warn 'SuomenVerkkomaksut using user ' . $user;
+        warn 'Paytrail submitting JSON content ' . $json_content;
+        warn 'Paytrail using user ' . $user;
 
         # $Net::SSLeay::trace = 3;
     }
@@ -185,9 +185,9 @@ sub submit {
     # response, to be stored in case the user needs it in the future.
     $self->server_response_json($page);
 
-    warn 'SuomenVerkkomaksut server response ' . Dumper($server_response)    if ( $self->debug() );
-    warn 'Suomenverkkomaksut server response headers ' . Dumper( \%headers ) if ( $self->debug() );
-    warn 'SuomenVerkkomaksut server response content ' . Dumper($page)       if ( $self->debug() );
+    warn 'Paytrail server response ' . Dumper($server_response)    if ( $self->debug() );
+    warn 'Paytrail server response headers ' . Dumper( \%headers ) if ( $self->debug() );
+    warn 'Paytrail server response content ' . Dumper($page)       if ( $self->debug() );
 
     # * call is_success() with either a true or false value, indicating
     #   if the transaction was successful or not.
@@ -280,7 +280,7 @@ has 'result_code' => ( is => 'rw' );
 
 =head2 error_message
 
-Populated when you call submit and the submission is not succesful. Contains the error message from Suomen Verkkomaksut.
+Populated when you call submit and the submission is not succesful. Contains the error message from Paytrail.
 
 =cut
 
@@ -315,24 +315,24 @@ sub verify_return {
     # use test_merchant_secret if in test mode, otherwise use the real merchant_secret.
     my $secret = $self->test_transaction() ? $self->test_merchant_secret() : $self->merchant_secret();
 
-    warn 'SuomenVerkkomaksut verify_return got ' . Dumper($args) if ( $self->debug() );
+    warn 'Paytrail verify_return got ' . Dumper($args) if ( $self->debug() );
 
     my $our_return_authcode;
     if ( $type eq 'failure' ) {
-        warn 'SuomenVerkkomaksut: type eq failure.' if ( $self->debug() );
+        warn 'Paytrail: type eq failure.' if ( $self->debug() );
         $our_return_authcode = uc( md5_hex( join( '|', $order_number, $timestamp, $secret ) ) );
     }
     else {
-        warn 'SuomenVerkkomaksut: type defaulting to success.' if ( $self->debug() );
+        warn 'Paytrail: type defaulting to success.' if ( $self->debug() );
 
         # default: type eq 'success'
         $our_return_authcode = uc( md5_hex( join( '|', $order_number, $timestamp, $paid, $method, $secret ) ) );
     }
-    warn 'SuomenVerkkomaksut: our return authcode: ' . $our_return_authcode     if ( $self->debug() );
-    warn 'SuomenVerkkomaksut: their return authcode: ' . $their_return_authcode if ( $self->debug() );
+    warn 'Paytrail: our return authcode: ' . $our_return_authcode     if ( $self->debug() );
+    warn 'Paytrail: their return authcode: ' . $their_return_authcode if ( $self->debug() );
 
     my $result = ( $our_return_authcode eq $their_return_authcode ) ? 1 : 0;
-    warn 'SuomenVerkkomaksut: verify_return result ' . $result if ( $self->debug() );
+    warn 'Paytrail: verify_return result ' . $result if ( $self->debug() );
     return $result;
 }
 
@@ -363,7 +363,7 @@ has path   => ( is => 'rw', default => '/api-payment/create' );
 
 =head2 api_version
 
-The API version of Suomen Verkkomaksut. Defaults to 1.
+The API version of Paytrail. Defaults to 1.
 
 =cut
 
