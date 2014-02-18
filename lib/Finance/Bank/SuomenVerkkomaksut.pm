@@ -27,7 +27,7 @@ Finance::Bank::SuomenVerkkomaksut - Process payments through JSON API of Paytrai
 
     # Creating a new payment
     my $tx = Finance::Bank::SuomenVerkkomaksut->new({merchant_id => 'XXX', merchant_secret => 'YYY'});
-    # All content in accordance to http://docs.verkkomaksut.fi/ field specs
+    # All content in accordance to http://docs.paytrail.com/ field specs
     $tx->content({
             orderNumber => 1,
             referenceNumber => 13,
@@ -351,7 +351,7 @@ The server host name where the submission is sent to. Defaults to payment.verkko
 
 =cut
 
-has server => ( is => 'rw', default => 'payment.verkkomaksut.fi' );
+has server => ( is => 'rw', default => 'payment.paytrail.com' );
 
 =head2 path
 
@@ -363,7 +363,7 @@ has path   => ( is => 'rw', default => '/api-payment/create' );
 
 =head2 api_version
 
-The API version of Paytrail. Defaults to 1.
+The REST API version of Paytrail. Defaults to 1.
 
 =cut
 
@@ -378,9 +378,9 @@ Don't allow user to set the 'type' parameter of verify_return.
 
 =head1 SEE ALSO
 
-http://verkkomaksut.fi/
-http://docs.verkkomaksut.fi/
-http://www.verkkomaksut.fi/palvelut/palveluiden-kayttoonotto
+http://www.paytrail.com/
+http://docs.paytrail.com/
+http://www.frantic.com/
 
 =head1 AUTHOR
 
@@ -388,7 +388,7 @@ Oskari Okko Ojala E<lt>okko@cpan.orgE<gt>, Frantic Oy http://www.frantic.com/
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) Oskari Ojala 2011.
+Copyright (C) Oskari Ojala 2011-2014.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,
