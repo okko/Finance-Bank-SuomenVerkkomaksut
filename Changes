@@ -1,5 +1,9 @@
 Changelog for Finance::Bank::SuomenVerkkomaksut
 
+0.006     2013-02-18 15:30:00 Europe/Helsinki
+
+    * Change name in documentation and in debug messages from Suomen Verkkomaksut to Paytrail.
+
 0.005     2013-02-18 15:10:00 Europe/Helsinki
 
     * Add missing "use MIME::Base64" into the component.
