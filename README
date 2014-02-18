@@ -1,10 +1,10 @@
 NAME
     Finance::Bank::SuomenVerkkomaksut - Process payments through JSON API of
-    Suomen Verkkomaksut in Finland. Payments from all Finnish Banks online:
-    Nordea, Osuuspankki, Sampo, Tapiola, Aktia, Nooa, Paikallisosuuspankit,
-    Säästöpankit, Handelsbanken, S-Pankki, Ålandsbanken, also from Visa,
-    Visa Electron, MasterCard credit cards through Luottokunta, and PayPal,
-    billing through Collector and Klarna.
+    Paytrail (Suomen Verkkomaksut) in Finland. Payments from all Finnish
+    Banks online: Nordea, Osuuspankki, Sampo, Tapiola, Aktia, Nooa,
+    Paikallisosuuspankit, Säästöpankit, Handelsbanken, S-Pankki,
+    Ålandsbanken, also from Visa, Visa Electron, MasterCard credit cards
+    through Luottokunta, and PayPal, billing through Collector and Klarna.
 
 SYNOPSIS
         use Finance::Bank::SuomenVerkkomaksut;
@@ -81,30 +81,30 @@ SYNOPSIS
         }
 
   merchant_id
-    The merchant id given to you by Suomen Verkkomaksut when you make the
-    contract. Defaults to the test merchant account.
+    The merchant id given to you by Paytrail when you make the contract.
+    Defaults to the test merchant account.
 
   merchant_secret
-    The merchant secret given to you by Suomen Verkkomaksut. Defaults to the
-    test merchant account.
+    The merchant secret given to you by Paytrail. Defaults to the test
+    merchant account.
 
   test_transaction
     Set to 1 to mark the mode as a test. In that case the test merchant
-    account of Suomen Verkkomaksut is used and no real money is transferred.
-    Intended for testing.
+    account of Paytrail is used and no real money is transferred. Intended
+    for testing.
 
   debug
     Set to 1 to get debug warnings. Defaults to 0, no debug.
 
   content
-    Set the content to be sent to Suomen Verkkomaksut API. All content must
-    be in accordance to http://docs.verkkomaksut.fi/ field specs, as a Perl
-    data structure.
+    Set the content to be sent to Paytrail API. All content must be in
+    accordance to http://docs.verkkomaksut.fi/ field specs, as a Perl data
+    structure.
 
   submit
-    Submits the content to Suomen Verkkomaksut API. Populates is_success,
-    url, server_response_json, server_response, result_code, error_message,
-    token and order_number.
+    Submits the content to Paytrail API. Populates is_success, url,
+    server_response_json, server_response, result_code, error_message, token
+    and order_number.
 
   is_success
     Populated when you call submit. Status of the submission.
@@ -135,7 +135,7 @@ SYNOPSIS
 
   error_message
     Populated when you call submit and the submission is not succesful.
-    Contains the error message from Suomen Verkkomaksut.
+    Contains the error message from Paytrail.
 
   verify_return
     When the end-user has completed the payment he will return to your
@@ -166,7 +166,7 @@ SYNOPSIS
     /api-payment/create.
 
   api_version
-    The API version of Suomen Verkkomaksut. Defaults to 1.
+    The API version of Paytrail. Defaults to 1.
 
 SECURITY
     Don't allow user to set the test_transaction to true! If the user can
