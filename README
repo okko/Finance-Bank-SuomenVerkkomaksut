@@ -1,5 +1,5 @@
 NAME
-    Finance::Bank::SuomenVerkkomaksut - Process payments through JSON API of
+    Finance::Bank::Paytrail - Process payments through JSON API of
     Paytrail (Suomen Verkkomaksut) in Finland. Payments from all Finnish
     Banks online: Nordea, Osuuspankki, Sampo, Tapiola, Aktia, Nooa,
     Paikallisosuuspankit, Säästöpankit, Handelsbanken, S-Pankki,
@@ -7,10 +7,10 @@ NAME
     through Luottokunta, and PayPal, billing through Collector and Klarna.
 
 SYNOPSIS
-        use Finance::Bank::SuomenVerkkomaksut;
+        use Finance::Bank::Paytrail;
 
         # Creating a new payment
-        my $tx = Finance::Bank::SuomenVerkkomaksut->new({merchant_id => 'XXX', merchant_secret => 'YYY'});
+        my $tx = Finance::Bank::Paytrail->new({merchant_id => 'XXX', merchant_secret => 'YYY'});
         # All content in accordance to http://docs.paytrail.com/ field specs
         $tx->content({
                 orderNumber => 1,
@@ -62,7 +62,7 @@ SYNOPSIS
         }
 
         # Verifying the payment when the user returns or when the notify address receives a request
-        my $tx = Finance::Bank::SuomenVerkkomaksut->new({merchant_id => 'XXX', merchant_secret => 'YYY'});
+        my $tx = Finance::Bank::Paytrail->new({merchant_id => 'XXX', merchant_secret => 'YYY'});
         my $checksum_matches = $tx->verify_return({
                 ORDER_NUMBER => $c->req->params->{ORDER_NUMBER},
                 TIMESTAMP => $c->req->params->{TIMESTAMP},
