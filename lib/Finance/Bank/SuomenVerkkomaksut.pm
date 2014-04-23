@@ -1,6 +1,7 @@
 package Finance::Bank::SuomenVerkkomaksut;
 
 use utf8;
+use strict;
 
 =encoding utf-8
 =cut
