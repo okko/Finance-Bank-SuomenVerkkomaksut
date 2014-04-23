@@ -1,4 +1,5 @@
 package Finance::Bank::Paytrail;
+
 use Moose;
 use utf8;
 
