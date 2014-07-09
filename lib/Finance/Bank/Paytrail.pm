@@ -133,7 +133,7 @@ has 'debug' => ( is => 'rw', default => 0 );
 
 =head2 content
 
-Set the content to be sent to Paytrail API. All content must be in accordance to http://docs.verkkomaksut.fi/ field specs, as a Perl data structure.
+Set the content to be sent to Paytrail API. All content must be in accordance to http://docs.paytrail.com/ field specs, as a Perl data structure.
 
 =cut
 
@@ -348,7 +348,7 @@ has port   => ( is => 'rw', default => '443' );
 
 =head2 server
 
-The server host name where the submission is sent to. Defaults to payment.verkkomaksut.fi.
+The server host name where the submission is sent to. Defaults to payment.paytrail.com.
 
 =cut
 
