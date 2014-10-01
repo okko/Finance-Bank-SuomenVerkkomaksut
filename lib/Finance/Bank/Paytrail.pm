@@ -338,6 +338,37 @@ sub verify_return {
 }
 
 
+=head2 return_authcode
+    Gives the authcode for payment return. You can use this to link directly to the
+    "success" or "failure" return pages without ever going to the bank, or to give a link
+    in for example e-mail confirmations.
+=cut
+
+sub return_authcode {
+    my $self                  = shift;
+    my $args                  = shift;
+    my $type                  = $args->{type} || 'success';
+    my $order_number          = $args->{ORDER_NUMBER};
+    my $timestamp             = $args->{TIMESTAMP};
+    my $paid                  = $args->{PAID};
+    my $method                = $args->{METHOD};
+    my $their_return_authcode = $args->{RETURN_AUTHCODE};
+
+    # use test_merchant_secret if in test mode, otherwise use the real merchant_secret.
+    my $secret = $self->test_transaction() ? $self->test_merchant_secret() : $self->merchant_secret();
+
+    my $our_return_authcode;
+    if ( $type eq 'failure' ) {
+        $our_return_authcode = uc( md5_hex( join( '|', $order_number, $timestamp, $secret ) ) );
+    }
+    else {
+        # default: type eq 'success'
+        $our_return_authcode = uc( md5_hex( join( '|', $order_number, $timestamp, $paid, $method, $secret ) ) );
+    }
+    return $our_return_authcode;
+}
+
+
 =head2 port
 
 The port where the submission is sent to. Defaults to 443.
